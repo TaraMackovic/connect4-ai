@@ -15,6 +15,9 @@ board = [
 def create_board():
     return [[0 for i in range(COLS)] for j in range(ROWS)]
 
+def copy_board(board):
+    return [list(row) for row in board]
+
 def print_board(board):
     for i in range(ROWS):
         print(" ".join(map(str, board[i])))
@@ -25,6 +28,9 @@ def is_valid_move(board, col):
         return False 
 
     return board[0][col] == 0
+
+def get_legal_moves(board):
+    return [col for col in range(COLS) if is_valid_move(board, col)]
 
 def get_next_empty_row(board, col):
     for i in range(ROWS -1, -1, -1):
@@ -40,6 +46,9 @@ def make_move(board, col, player):
     row = get_next_empty_row(board, col)
     board[row][col] = player
     return row, col
+
+def undo_move(board, row, col):
+    board[row][col] = 0
 
 
 def play_game():
