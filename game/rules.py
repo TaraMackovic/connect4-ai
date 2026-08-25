@@ -1,4 +1,4 @@
-from board import ROWS, COLS
+from .board import ROWS, COLS
 
 def check_win(board, player):
 
