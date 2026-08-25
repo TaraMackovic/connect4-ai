@@ -43,6 +43,8 @@ def make_move(board, col, player):
 
 
 def play_game():
+    from rules import get_game_result
+
     board = create_board()
     player = 1
 
@@ -56,7 +58,18 @@ def play_game():
             print(f"Nevalidan potez: Igrac {player} igra ponovo.")
             continue
 
-        if player == 1: player = 2 
+        result = get_game_result(board)
+
+        if result == "draw":
+            print_board(board)
+            print("Izjednaceno!")
+            break
+        elif result is not None:
+            print_board(board)
+            print("Pobijednik je igrac: ", result)
+            break
+
+        if player == 1: player = 2
         else: player = 1
 
 if __name__ == "__main__":
