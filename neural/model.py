@@ -28,13 +28,14 @@ class ConnectFourEvalNet(nn.Module):
 # Funkcija za konvertovanje board reprezentacije u tensor za nn
 def board_to_tensor(board, player):
     flat = []
-    for cell in board:
-        if cell  == 0:
-            flat.append(0.0)
-        elif cell == player:
-            flat.append(1.0)
-        else:
-            flat.append(-1.0)
+    for row in board:
+        for cell in row:
+            if cell  == 0:
+                flat.append(0.0)
+            elif cell == player:
+                flat.append(1.0)
+            else:
+                flat.append(-1.0)
     return torch.tensor(flat, dtype=torch.float32)
 
 if __name__ == "__main__":
