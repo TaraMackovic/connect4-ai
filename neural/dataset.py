@@ -8,15 +8,11 @@ Faza 2: zamijena radnom poteza minmax potezima i labelirati pozicije minmax eval
 import random
 import pickle
 
-from game.board import create_board, make_move, is_valid_move, COLS
+from game.board import create_board, make_move, is_valid_move, copy_board, get_legal_moves
 from game.rules import get_game_result
-
-def get_legal_moves(board):
-    return [c for c in range(COLS) if is_valid_move(board, c)]
 
 # Funkcija za simulaciju partije random potezima koristeci board.py/rules.py funkcije
 def generate_random_game(rows=6, cols=7):
-
     board = create_board()
     positions = []
     current_player = 1
@@ -28,7 +24,7 @@ def generate_random_game(rows=6, cols=7):
             return positions, get_game_result(board) # draw
 
         # snapshot prije poteza
-        board_snapshot = [row.copy() for row in board]
+        board_snapshot = copy_board(board)
         positions.append((board_snapshot, current_player))
 
         col = random.choice(legal_moves)
@@ -40,6 +36,9 @@ def generate_random_game(rows=6, cols=7):
 
         current_player = 2 if current_player == 1 else 1
 
+# TODO (Faza 2): label_from_outcome trenutno dodjeljuje ishod cijele partije
+# svakoj poziciji (i ranim i kasnim potezima) - gruba aproksimacija.
+# Zamijeniti minimax evaluacijom same pozicije.
 def label_from_outcome(result, player):
     if result == "draw":
         return 0.0
@@ -88,8 +87,8 @@ def load_dataset(path):
         return pickle.load(f)
 
 if __name__ == "__main__":
-    data = generate_dataset(num_games=10)
-    print(f"Generisano {len(data)} pozicija iz 1000 partija")
+    data = generate_dataset(num_games=2000, save_path="data/random_games.pkl")
+    print(f"Generisano {len(data)} pozicija iz 2000 partija")
     print("Primjer pozicije (board, player, label)")
     print(data[0])
 
