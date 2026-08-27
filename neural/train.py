@@ -1,3 +1,7 @@
+import os
+
+import matplotlib.pyplot as plt
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -27,6 +31,8 @@ def train(data_path, epochs=20, batch_size=32, lr=1e-3):
     optimizer = optim.Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
 
+    loss_history = []
+
     for epoch in range(epochs):
         total_loss = 0.0
         for x, y in loader:
@@ -36,11 +42,24 @@ def train(data_path, epochs=20, batch_size=32, lr=1e-3):
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
-        print(f"Epoch {epoch+1}/{epochs}, loss: {total_loss/len(loader):.4f}")
+
+        avg_loss = total_loss / len(loader)
+        loss_history.append(avg_loss)
+        print(f"Epoch {epoch+1}/{epochs}, loss: {avg_loss:.4f}")
 
     torch.save(model.state_dict(), "data/model_checkpoint.pt")
     print("Model sacuvan.")
-    return model
+
+    os.makedirs("report", exist_ok=True)
+    plt.figure()
+    plt.plot(range(1, epochs+1), loss_history)
+    plt.xlabel("Epoch")
+    plt.ylabel("MSE Loss")
+    plt.title("Trening loss - Connect Four eval mreza")
+    plt.savefig("report/loss_curve.png")
+    print("Loss kriva sacuvana: report/loss_curve.png")
+
+    return model, loss_history
 
 if __name__ == "__main__":
     train("data/random_games.pkl")
