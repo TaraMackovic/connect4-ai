@@ -3,6 +3,7 @@ import time
 
 from game.board import create_board, print_board, get_legal_moves, make_move, copy_board
 from game.rules import get_game_result
+from search.heuristic_eval import evaluate 
 
 class State:
     def __init__(self, board=None, curr_player=1):
@@ -36,8 +37,7 @@ def evaluate_end(state):
     return 0  # draw
 
 def heuristic(state):
-    #TODO
-    return 0
+    return evaluate(state.board, player=1)
 
 
 def minimize(state, depth):
@@ -122,15 +122,17 @@ if __name__ == "__main__":
         [0, 1, 2, 2, 2, 1, 0],
     ]
     state = State(board, curr_player=1)
-
     print_board(board)
     print("Igrac 1 (AI) bira kolonu (sa alpha-beta, depth = 5):")
  
     score, next_state = maximize_ab(state, depth=5)
     print(f"Predlozena kolona: {next_state.last_move}, score: {score}\n")
  
+    print("Provjera na maloj dubini (depth = 1) - heuristika treba dati signal:")
+    score_shallow, next_state_shallow = maximize_ab(State(board, curr_player=1), depth=1)
+    print(f"Predlozena kolona (depth=1): {next_state_shallow.last_move}, score: {score_shallow}\n")
+ 
     # Poredjenje brzine Minmax bez alpha-beta i Minmax sa alpha-beta odsjecanjem
-
     print(f"{'Dubina':<8}{'Bez AB (s)':<14}{'Alpha-beta (s)':<16}{'Razlika':<8}")
     for depth in range(1, 5):
         t0 = time.time()
@@ -143,4 +145,3 @@ if __name__ == "__main__":
  
         difference = t_mm / t_mmab if t_mmab > 0 else float("inf")
         print(f"{depth:<8}{t_mm:<14.4f}{t_mmab:<16.4f}{difference:<8.2f}x")
- 
