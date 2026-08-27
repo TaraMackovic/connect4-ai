@@ -36,6 +36,9 @@ def generate_random_game(rows=6, cols=7):
 
         current_player = 2 if current_player == 1 else 1
 
+# TODO (Faza 2): label_from_outcome trenutno dodjeljuje ishod cijele partije
+# svakoj poziciji (i ranim i kasnim potezima) - gruba aproksimacija.
+# Zamijeniti minimax evaluacijom same pozicije.
 def label_from_outcome(result, player):
     if result == "draw":
         return 0.0
