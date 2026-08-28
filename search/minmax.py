@@ -1,8 +1,7 @@
 import math 
 
-from game.board import create_board, print_board, get_legal_moves, make_move, copy_board
+from game.board import create_board, get_legal_moves, make_move, copy_board
 from game.rules import get_game_result
-from search.heuristic_eval import evaluate 
 
 class State:
     def __init__(self, board=None, curr_player=1):
@@ -41,53 +40,51 @@ def evaluate_end(state):
         return -math.inf
     return 0  # draw
 
-def heuristic(state):
-    return evaluate(state.board, player=1)
+def evaluate_state(state, eval_function):
+    return eval_function(state.board, player=1)
 
-
-def minimize(state, depth):
+def minimize(state, depth, eval_function):
     if end(state):
         return evaluate_end(state), state
     if depth == 0:
-        return heuristic(state), state
+        return evaluate_state(state, eval_function), state
 
     best_score = math.inf
     best_state = None
     for next_state in possible_states(state):
-        score, _ = maximize(next_state, depth - 1)
+        score, _ = maximize(next_state, depth - 1, eval_function)
         if score < best_score:
             best_score = score
             best_state = next_state
     return best_score, best_state
 
-def maximize(state, depth):
+def maximize(state, depth, eval_function):
     if end(state):
         return evaluate_end(state), state
     if depth == 0:
-        return heuristic(state), state
+        return evaluate_state(state, eval_function), state
  
     best_score = -math.inf
     best_state = None
     for next_state in possible_states(state):
-        score, _ = minimize(next_state, depth - 1)
+        score, _ = minimize(next_state, depth - 1, eval_function)
         if score > best_score:
             best_score = score
             best_state = next_state
     return best_score, best_state
 
 transposition_table = {}
-USE_TT = True
 
 def board_key(board):
     return tuple(tuple(row) for row in board)
 
 # Minmax with alpha-beta pruning
 
-def minimize_ab(state, depth, alpha=-math.inf, beta=math.inf):
+def minimize_ab(state, depth, eval_function, alpha=-math.inf, beta=math.inf, use_tt=True):
     if end(state):
         return evaluate_end(state), state
     if depth == 0:
-        return heuristic(state), state
+        return evaluate_state(state, eval_function), state
 
     key = (board_key(state.board), depth)
     if key in transposition_table:
@@ -96,7 +93,7 @@ def minimize_ab(state, depth, alpha=-math.inf, beta=math.inf):
     best_score = math.inf
     best_state = None
     for next_state in possible_states(state):
-        score, _ = maximize_ab(next_state, depth - 1, alpha, beta)
+        score, _ = maximize_ab(next_state, depth - 1, eval_function, alpha, beta, use_tt)
         if score < best_score:
             best_score = score
             best_state = next_state
@@ -105,15 +102,15 @@ def minimize_ab(state, depth, alpha=-math.inf, beta=math.inf):
         if alpha >= beta:
             break
 
-    if USE_TT:
+    if use_tt:
         transposition_table[key] = (best_score, best_state)
     return best_score, best_state
  
-def maximize_ab(state, depth, alpha=-math.inf, beta=math.inf):
+def maximize_ab(state, depth, eval_function, alpha=-math.inf, beta=math.inf, use_tt=True):
     if end(state):
         return evaluate_end(state), state
     if depth == 0:
-        return heuristic(state), state
+        return evaluate_state(state, eval_function), state
 
     key = (board_key(state.board), depth)
     if key in transposition_table:
@@ -122,7 +119,7 @@ def maximize_ab(state, depth, alpha=-math.inf, beta=math.inf):
     best_score = -math.inf
     best_state = None
     for next_state in possible_states(state):
-        score, _ = minimize_ab(next_state, depth - 1, alpha, beta)
+        score, _ = minimize_ab(next_state, depth - 1, eval_function, alpha, beta, use_tt)
         if score > best_score:
             best_score = score
             best_state = next_state
@@ -131,6 +128,6 @@ def maximize_ab(state, depth, alpha=-math.inf, beta=math.inf):
         if alpha >= beta:
             break
 
-    if USE_TT:
+    if use_tt:
         transposition_table[key] = (best_score, best_state)
     return best_score, best_state
