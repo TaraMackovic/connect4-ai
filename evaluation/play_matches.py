@@ -3,7 +3,7 @@
 
 from game.board import print_board
 from game.rules import get_game_result
-from search.minmax import State, maximize_ab, minimize_ab
+from search.minmax import State, maximize_ab, minimize_ab, clear_transposition_table
 from search.heuristic_eval import evaluate as evaluate_heuristic
 from neural.neural_eval import evaluate as evaluate_neural
 
@@ -12,6 +12,8 @@ NEURAL_PLAYER = 2
 DEPTH = 3
 
 def play_one_game():
+
+    clear_transposition_table()
     state = State(curr_player=HEURISTIC_PLAYER)
 
     while True:

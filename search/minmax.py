@@ -53,7 +53,7 @@ def minimize(state, depth, eval_function):
     best_state = None
     for next_state in possible_states(state):
         score, _ = maximize(next_state, depth - 1, eval_function)
-        if score < best_score:
+        if best_state is None or score < best_score:
             best_score = score
             best_state = next_state
     return best_score, best_state
@@ -68,7 +68,7 @@ def maximize(state, depth, eval_function):
     best_state = None
     for next_state in possible_states(state):
         score, _ = minimize(next_state, depth - 1, eval_function)
-        if score > best_score:
+        if best_state is None or score > best_score:
             best_score = score
             best_state = next_state
     return best_score, best_state
@@ -78,6 +78,9 @@ transposition_table = {}
 def board_key(board):
     return tuple(tuple(row) for row in board)
 
+def clear_transposition_table():
+    transposition_table.clear()
+
 # Minmax with alpha-beta pruning
 
 def minimize_ab(state, depth, eval_function, alpha=-math.inf, beta=math.inf, use_tt=True):
@@ -86,15 +89,15 @@ def minimize_ab(state, depth, eval_function, alpha=-math.inf, beta=math.inf, use
     if depth == 0:
         return evaluate_state(state, eval_function), state
 
-    key = (board_key(state.board), depth)
-    if key in transposition_table:
+    key = (board_key(state.board), depth, id(eval_function))
+    if use_tt and key in transposition_table:
         return transposition_table[key]
  
     best_score = math.inf
     best_state = None
     for next_state in possible_states(state):
         score, _ = maximize_ab(next_state, depth - 1, eval_function, alpha, beta, use_tt)
-        if score < best_score:
+        if best_state is None or score < best_score:
             best_score = score
             best_state = next_state
         if best_score < beta:
@@ -112,15 +115,15 @@ def maximize_ab(state, depth, eval_function, alpha=-math.inf, beta=math.inf, use
     if depth == 0:
         return evaluate_state(state, eval_function), state
 
-    key = (board_key(state.board), depth)
-    if key in transposition_table:
+    key = (board_key(state.board), depth, id(eval_function))
+    if use_tt and key in transposition_table:
         return transposition_table[key]
  
     best_score = -math.inf
     best_state = None
     for next_state in possible_states(state):
         score, _ = minimize_ab(next_state, depth - 1, eval_function, alpha, beta, use_tt)
-        if score > best_score:
+        if best_state is None or score > best_score:
             best_score = score
             best_state = next_state
         if best_score > alpha:
