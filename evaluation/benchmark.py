@@ -22,8 +22,6 @@ NUM_GAMES = 100
 RANDOM_OPENING_MOVES = 2
 
 def play_one_game(first_player, rand_opening_moves=RANDOM_OPENING_MOVES):
-
-    clear_transposition_table()
     state = State(curr_player=first_player)
     move_count = 0
 
@@ -41,6 +39,8 @@ def play_one_game(first_player, rand_opening_moves=RANDOM_OPENING_MOVES):
             state.play_move(col)
             move_count += 1
             continue
+
+        clear_transposition_table()
 
         if state.curr_player == HEURISTIC_PLAYER:
             start = time.perf_counter()

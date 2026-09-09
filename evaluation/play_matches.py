@@ -10,7 +10,7 @@ from neural.neural_eval import evaluate as evaluate_neural
 
 HEURISTIC_PLAYER = 1
 NEURAL_PLAYER = 2
-DEPTH = 3
+#DEPTH = 3
 NUM_GAMES = 50
 RANDOM_OPENING_MOVES = 2
 
@@ -33,9 +33,9 @@ def play_one_game(first_player, rand_opening_moves=RANDOM_OPENING_MOVES):
             continue
 
         if state.curr_player == HEURISTIC_PLAYER:
-            _, next_state = maximize_ab(state, depth=DEPTH, eval_function=evaluate_heuristic)
+            _, next_state = maximize_ab(state, depth=3, eval_function=evaluate_heuristic)
         else:
-            _, next_state = minimize_ab(state, depth=DEPTH, eval_function=evaluate_neural)
+            _, next_state = minimize_ab(state, depth=4, eval_function=evaluate_neural)
 
         if next_state is None:
             print("Greska: minmax nije vratio sledece stanje!")

@@ -1,7 +1,7 @@
 import torch
 from neural.model import ConnectFourEvalNet, board_to_tensor
 
-MODEL_PATH = "data/model_checkpoint.pt"
+MODEL_PATH = "data/model_checkpoint_v2.pt"
 
 _model = None
 
@@ -18,5 +18,6 @@ def evaluate(board, player):
     model = _load_model()
     with torch.no_grad():
         x = board_to_tensor(board, player)
+        x = x.unsqueeze(0) # pretvara u batch oblik
         score = model(x).item()
     return score

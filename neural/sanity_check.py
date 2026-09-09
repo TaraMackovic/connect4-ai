@@ -18,11 +18,11 @@ def sanity_check():
     ]
 
     with torch.no_grad():
-        x = board_to_tensor(board_near_win, player=1)
+        x = board_to_tensor(board_near_win, player=1).unsqueeze(0)
         score = model(x).item()
         print(f"Skoro-pobjeda za igraca 1, ocjena za igraca 1: {score:.4f}")
 
-        x_opp = board_to_tensor(board_near_win, player=2)
+        x_opp = board_to_tensor(board_near_win, player=2).unsqueeze(0)
         score_opp = model(x_opp).item()
         print(f"Ista pozicija, ocjena za igraca 2: {score_opp:.4f}")
 
