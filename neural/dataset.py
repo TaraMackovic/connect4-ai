@@ -3,6 +3,7 @@
 import math
 import random
 import pickle
+import os
 
 from game.board import create_board, make_move, is_valid_move, copy_board, get_legal_moves
 from game.rules import get_game_result
@@ -83,6 +84,7 @@ def generate_dataset_ob(num_games=1000, depth=DEPTH, epsilon=EPSILON, save_path=
             print(f"Odigrano {i + 1}/{num_games} partija...")
 
     if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
         with open(save_path, "wb") as f:
             pickle.dump(dataset, f)
         print(f"Dataset sacuvan: {save_path} ({len(dataset)} pozicija)")
@@ -113,6 +115,7 @@ def generate_dataset_hybrid(num_games=1000, depth=DEPTH, epsilon=EPSILON, alpha=
 
     
     if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
         with open(save_path, "wb") as f:
             pickle.dump(dataset, f)
         print(f"Dataset sacuvan: {save_path} ({len(dataset)} pozicija)")
