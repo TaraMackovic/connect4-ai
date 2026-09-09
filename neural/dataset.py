@@ -1,57 +1,81 @@
-"""
-Generisanje trening podataka za neuronsku mrezu
+# Generisanje trening podataka za neuronsku mrezu
 
-Faza 1: nasumicne partije, bez pravih labela (placeholder)
-Faza 2: zamijena radnom poteza minmax potezima i labelirati pozicije minmax evaluacijom
-
-"""
+import math
 import random
 import pickle
 
 from game.board import create_board, make_move, is_valid_move, copy_board, get_legal_moves
 from game.rules import get_game_result
 
-# Funkcija za simulaciju partije random potezima koristeci board.py/rules.py funkcije
-def generate_random_game(rows=6, cols=7):
-    board = create_board()
-    positions = []
-    current_player = 1
+from search.minmax import State, maximize_ab, minimize_ab, clear_transposition_table
+from search.heuristic_eval import evaluate as evaluate_heuristic
 
-    while True:
-        legal_moves = get_legal_moves(board)
+DEPTH = 3
+EPSILON = 0.3 # vjerovatnoca random poteza 
+ALPHA = 0.7 # tezinski koeficijent
+NORM = 200.0
 
-        if not legal_moves:
-            return positions, get_game_result(board) # draw
+def scale_score(raw_score, norm=NORM, win_threshold=50000):
+    if raw_score >= win_threshold:
+        return 1.0
+    elif raw_score <= -win_threshold:
+        return -1.0
+    else:
+        return math.tanh(raw_score / norm)
 
-        # snapshot prije poteza
-        board_snapshot = copy_board(board)
-        positions.append((board_snapshot, current_player))
-
-        col = random.choice(legal_moves)
-        make_move(board, col, current_player)
-
-        results = get_game_result(board)
-        if results is not None:
-            return positions, results
-
-        current_player = 2 if current_player == 1 else 1
-
-# TODO (Faza 2): label_from_outcome trenutno dodjeljuje ishod cijele partije
-# svakoj poziciji (i ranim i kasnim potezima) - gruba aproksimacija.
-# Zamijeniti minimax evaluacijom same pozicije.
 def label_from_outcome(result, player):
     if result == "draw":
         return 0.0
     return 1.0 if result == player else -1.0
 
-# Funkcija za generisanje dataset-a kao listu (board, player, label) trojki (Monte Carlo pristup)
-def generate_dataset(num_games=1000, save_path=None):
-    """
-    TODO: dodati labeliranje (minmax eval)
-    """
+def generate_selfplay_game(depth=DEPTH, epsilon=EPSILON):
+    clear_transposition_table()
+    state = State(curr_player=1)
+    positions = []
+
+    while True:
+        result = get_game_result(state.board)
+        if result is not None:
+            return positions, result
+        
+        # snapshot prije poteza
+        board_snapshot = copy_board(state.board)
+        positions.append((board_snapshot, state.curr_player))
+
+        legal_moves = get_legal_moves(state.board)
+
+        if random.random() < epsilon:
+            col = random.choice(legal_moves)
+            state.play_move(col)
+        else:
+            if state.curr_player == 1:
+                _, next_state = maximize_ab(state, depth=depth, eval_function=evaluate_heuristic)
+            else:
+                _, next_state = minimize_ab(state, depth=depth, eval_function=evaluate_heuristic)
+
+            if next_state is None:
+                # ako minmax ne vrati stanje
+                col = random.choice(legal_moves)
+                state.play_move(col)
+            else:
+                state = next_state
+
+
+def minimax_score(board_snapshot, player, depth=DEPTH):
+    state = State(copy_board(board_snapshot), curr_player=player)
+    if player == 1:
+        score_p1, _ = maximize_ab(state, depth=depth, eval_function=evaluate_heuristic)
+    else:
+        score_p1, _ = minimize_ab(state, depth=depth, eval_function=evaluate_heuristic)
+
+    return score_p1 if player == 1 else -score_p1
+
+
+# Funkcija za generisanje dataset-a kao listu (board, player, label) trojki (Outcome-based pristup)
+def generate_dataset_ob(num_games=1000, depth=DEPTH, epsilon=EPSILON, save_path=None):
     dataset = []
     for i in range(num_games):
-        positions, result = generate_random_game()
+        positions, result = generate_selfplay_game(depth=depth, epsilon=epsilon)
         for board_snapshot, player in positions:
             dataset.append((board_snapshot, player, label_from_outcome(result, player)))
 
@@ -65,31 +89,46 @@ def generate_dataset(num_games=1000, save_path=None):
         
     return dataset
 
-def analyze_outcomes(num_games=1000):
-    p1, p2, draws = 0, 0, 0
+def combined_label(minimax_score, outcome_label, alpha=ALPHA):
+    return alpha * minimax_score + (1-alpha) * outcome_label
 
-    for _ in range(num_games):
-        _, result = generate_random_game()
-        if result == 1:
-            p1 += 1
-        elif result == 2:
-            p2 += 1
-        elif result == "draw":
-            draws += 1
+def generate_dataset_hybrid(num_games=1000, depth=DEPTH, epsilon=EPSILON, alpha=ALPHA, norm=NORM, save_path=None):
+    dataset = []
 
-    print(f"Stistika: za {num_games} igara: ")
-    print(f"Pobjede igraca 1: {(p1/num_games)*100:.1f}%")
-    print(f"Pobjede igraca 2: {(p2/num_games)*100:.1f}%")
-    print(f"Draw: {(draws/num_games)*100:.1f}%")
+    for i in range(num_games):
+        positions, result = generate_selfplay_game(depth=depth, epsilon=epsilon)
+
+        for board_snapshot, player in positions:
+            raw_score = minimax_score(board_snapshot, player, depth=depth)
+
+            scaled = scale_score(raw_score, norm=norm)
+
+            outcome_label = label_from_outcome(result, player)
+            final_label = combined_label(scaled, outcome_label, alpha=alpha)
+            
+            dataset.append((board_snapshot, player, final_label))
+
+        if (i + 1) % 100 == 0:
+            print(f"Odigrano {i+1}/{num_games} partija...")
+
+    
+    if save_path:
+        with open(save_path, "wb") as f:
+            pickle.dump(dataset, f)
+        print(f"Dataset sacuvan: {save_path} ({len(dataset)} pozicija)")
+
+    return dataset
 
 def load_dataset(path):
     with open(path, "rb") as f:
         return pickle.load(f)
 
 if __name__ == "__main__":
-    data = generate_dataset(num_games=2000, save_path="data/random_games.pkl")
-    print(f"Generisano {len(data)} pozicija iz 2000 partija")
-    print("Primjer pozicije (board, player, label)")
-    print(data[0])
-
-    #analyze_outcomes()
+    #data_outcome_based = generate_dataset_ob(num_games=3000, save_path="data/dataset_outcome_based.pkl")
+    #print(f"Generisano {len(data_outcome_based)} pozicija")
+    
+    data_hybrid = generate_dataset_hybrid(num_games=3000, save_path="data/dataset_hybrid.pkl")
+    #print(f"Generisano {len(data_hybrid)} pozicija")
+    #print("Primjer pozicije (board, player, label):")
+    #print(data_hybrid[0])
+    
