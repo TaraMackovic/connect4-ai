@@ -8,6 +8,7 @@
 
 import random
 import time
+import os
 
 from game.board import get_legal_moves
 from game.rules import get_game_result
@@ -59,7 +60,7 @@ def play_one_game(first_player, rand_opening_moves=RANDOM_OPENING_MOVES):
         state = next_state
         move_count += 1
 
-def run_benchmark(num_games=NUM_GAMES):
+def run_benchmark(num_games=NUM_GAMES, save_path=None):
     heuristic_wins = 0
     neural_wins = 0
     draws = 0
@@ -68,7 +69,7 @@ def run_benchmark(num_games=NUM_GAMES):
     all_heuristic_times = []
     all_neural_times = []
 
-    for game_number in range(1, NUM_GAMES + 1):
+    for game_number in range(1, num_games + 1):
         first_player = HEURISTIC_PLAYER if game_number % 2 == 1 else NEURAL_PLAYER
 
         result, move_count, heuristic_times, neural_times = play_one_game(first_player)
@@ -92,16 +93,7 @@ def run_benchmark(num_games=NUM_GAMES):
     avg_heuristic_time = sum(all_heuristic_times) / len(all_heuristic_times) if all_heuristic_times else 0.0
     avg_neural_time = sum(all_neural_times) / len(all_neural_times) if all_neural_times else 0.0
 
-    print("\n=== Rezultati benchmarka ===")
-    print(f"Ukupno partija:            {num_games}")
-    print(f"Heuristic pobjede:         {heuristic_wins} ({heuristic_wins/num_games*100:.1f}%)")
-    print(f"Neural pobjede:            {neural_wins} ({neural_wins/num_games*100:.1f}%)")
-    print(f"Nerijeseno:                {draws} ({draws/num_games*100:.1f}%)")
-    print(f"Prosjecan broj poteza:     {avg_moves:.1f}")
-    print(f"Vrijeme po potezu (Heuristic): {avg_heuristic_time*1000:.2f} ms")
-    print(f"Vrijeme po potezu (Neural):    {avg_neural_time*1000:.2f} ms")
-
-    return {
+    results = {
         "heuristic_wins": heuristic_wins,
         "neural_wins": neural_wins,
         "draws": draws,
@@ -110,5 +102,23 @@ def run_benchmark(num_games=NUM_GAMES):
         "avg_neural_time": avg_neural_time,
     }
 
+    if save_path:
+        directory = os.path.dirname(save_path)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+        with open(save_path, "a", encoding="utf-8") as f:
+            f.write("=== Rezultati benchmarka ===\n")
+            f.write(f"Dubina pretrage: {DEPTH}\n")
+            f.write(f"Ukupno partija: {num_games}\n")
+            f.write(f"Heuristic pobjede: {heuristic_wins} ({heuristic_wins / num_games * 100:.1f}%)\n")
+            f.write(f"Neural pobjede: {neural_wins} ({neural_wins / num_games * 100:.1f}%)\n")
+            f.write(f"Nerijeseno: {draws} ({draws / num_games * 100:.1f}%)\n")
+            f.write(f"Prosjecan broj poteza: {avg_moves:.2f} ms\n")
+            f.write(f"Prosjecno vrijeme po potezu - Heuristic: {avg_heuristic_time * 1000:.2f} ms\n")
+            f.write(f"Prosjecno vrijeme po potezu - Neural: {avg_neural_time * 1000:.2f} ms\n")
+            f.write("\n")
+
+    return results
+
 if __name__ == "__main__":
-    run_benchmark()
+    run_benchmark(save_path="data/benchmark_results.txt")
