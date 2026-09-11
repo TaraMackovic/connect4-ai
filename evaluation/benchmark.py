@@ -29,6 +29,8 @@ def play_one_game(first_player, rand_opening_moves=RANDOM_OPENING_MOVES):
     heuristic_times = []
     neural_times = []
 
+    clear_transposition_table()
+
     while True:
         result = get_game_result(state.board)
         if result is not None:
@@ -40,8 +42,7 @@ def play_one_game(first_player, rand_opening_moves=RANDOM_OPENING_MOVES):
             state.play_move(col)
             move_count += 1
             continue
-
-        clear_transposition_table()
+        
 
         if state.curr_player == HEURISTIC_PLAYER:
             start = time.perf_counter()
@@ -113,7 +114,7 @@ def run_benchmark(num_games=NUM_GAMES, save_path=None):
             f.write(f"Heuristic pobjede: {heuristic_wins} ({heuristic_wins / num_games * 100:.1f}%)\n")
             f.write(f"Neural pobjede: {neural_wins} ({neural_wins / num_games * 100:.1f}%)\n")
             f.write(f"Nerijeseno: {draws} ({draws / num_games * 100:.1f}%)\n")
-            f.write(f"Prosjecan broj poteza: {avg_moves:.2f} ms\n")
+            f.write(f"Prosjecan broj poteza: {avg_moves:.2f} \n")
             f.write(f"Prosjecno vrijeme po potezu - Heuristic: {avg_heuristic_time * 1000:.2f} ms\n")
             f.write(f"Prosjecno vrijeme po potezu - Neural: {avg_neural_time * 1000:.2f} ms\n")
             f.write("\n")

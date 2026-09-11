@@ -23,6 +23,7 @@ class ConnectFourEvalNet(nn.Module):
         self.fc = nn.Sequential(
             nn.Linear(conv2_channels * ROWS * COLS, conv2_channels),
             nn.ReLU(),
+            nn.Dropout(0.3),
             nn.Linear(conv2_channels, 1),
             nn.Tanh()
         )

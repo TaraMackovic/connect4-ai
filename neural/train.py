@@ -46,6 +46,7 @@ def train(data_path=None, model_path=None, plot_path=None, epochs=20, batch_size
 
     train_loss_history = []
     val_loss_history = []
+    best_val_loss = float("inf")
 
     for epoch in range(epochs):
         # trening faza
@@ -76,9 +77,12 @@ def train(data_path=None, model_path=None, plot_path=None, epochs=20, batch_size
 
         print(f"Epoch {epoch+1}/{epochs}, Train loss: {avg_train_loss:.4f}, Val loss: {avg_val_loss:.4f}")
 
-    os.makedirs("data", exist_ok=True)
-    torch.save(model.state_dict(), model_path)
-    print(f"Model sacuvan u: {model_path}")
+        # Sačuvano samo ako je val loss poboljšan
+        if avg_val_loss < best_val_loss:
+            best_val_loss = avg_val_loss
+            os.makedirs(os.path.dirname(model_path), exist_ok=True)
+            torch.save(model.state_dict(), model_path)
+            print(f"  -> Novi najbolji model sacuvan (val loss: {best_val_loss:.4f})")
 
     # Cuvanje grafika Loss krive
     os.makedirs("report", exist_ok=True)
@@ -103,7 +107,7 @@ if __name__ == "__main__":
 
     # 2. Treniranje - Hibridni pristup
     train(
-        data_path="data/dataset_hybrid.pkl",
-        model_path="data/model_checkpoint_v2.pt",
-        plot_path="report/loss_curve_v2.png"
+        data_path="data/dataset_hybrid_10000.pkl",
+        model_path="data/model_checkpoint_v2_fin.pt",
+        plot_path="report/loss_curve_v2_fin.png"
     )

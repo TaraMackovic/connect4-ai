@@ -1,7 +1,7 @@
 import torch
 from neural.model import ConnectFourEvalNet, board_to_tensor
 
-MODEL_PATH = "data/model_checkpoint_v2_10000.pt"
+MODEL_PATH = "data/model_checkpoint_v2_fin.pt"
 
 _model = None
 
